@@ -16,13 +16,6 @@ set_per_process_memory_growth(True)
 
 PATH = 'img_align_celeba/*.jpg'
 
-# Required files:
-ENCODED_DATASET = 'data/encoded_dataset.hdf5'
-FITTED_DATASET = 'data/dataset.npy'
-EIGENVALUES = 'data/eigenvalues.npy'
-EIGENVECTORS = 'data/eigenvectors.npy'
-WEIGHTS = 'data/vae_weights.h5'
-
 OUT_SIZE = 128
 CHANNELS = 3
 

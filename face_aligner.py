@@ -3,18 +3,15 @@ import cv2
 import numpy as np
 from imageio import imwrite, imsave
 from operator import add
+from setup import *
+
 DESIRED_X = 64
 DESIRED_Y = 42
 DESIRED_SIZE = 48
 
-FINAL_IMAGE_WIDTH = 128
-FINAL_IMAGE_HEIGHT = 128
-
-face_cascade = cv2.CascadeClassifier(
-    'haar/haarcascade_frontalface_default.xml')
-mouth_cascade = cv2.CascadeClassifier(
-    'haar/Mouth.xml')
-eye_cascade = cv2.CascadeClassifier('haar/haarcascade_eye.xml')
+face_cascade = cv2.CascadeClassifier(FACE_CASCADE)
+mouth_cascade = cv2.CascadeClassifier(MOUTH_CASCADE)
+eye_cascade = cv2.CascadeClassifier(EYE_CASCADE)
 
 def get_pos(x, y, h, w):
     """
@@ -41,16 +38,18 @@ def debug_landmarks(img, r_eye, l_eye, mouth):
 
 
 def get_face(img):
+    '''
+    Capturing a user's face from an image.
+    '''
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     image_np = np.array(img)
 
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
     if len(faces) == 0:
         return
-    x,y,w,h = faces[0]
+    x,y,w,h = faces[0] # The demo works on one face at a time
     mouth = mouth_cascade.detectMultiScale(gray, 1.2, 5)
 
-    # cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
     roi_gray = gray[y:y+h, x:x+w]
     eyes = eye_cascade.detectMultiScale(roi_gray)
@@ -92,6 +91,6 @@ def align(image_np, right_eye_pos, left_eye_pos, mouth_pos):
             scale=1, rotation=0, translation=(-DESIRED_X, -DESIRED_Y))
 
         output_arr = transform.warp(image=image_np, inverse_map=(
-            moveT + rotateT))[0:FINAL_IMAGE_HEIGHT, 0:FINAL_IMAGE_WIDTH]
+            moveT + rotateT))[0:OUT_SIZE, 0:OUT_SIZE]
 
         return output_arr

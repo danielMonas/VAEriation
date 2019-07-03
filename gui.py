@@ -117,16 +117,19 @@ class GUI:
             rows += 1
 
         self.scales = []
+        self.vals = []
         for i in range(N_SCALES):
             r = i // cols * 2
             c = i % cols
 
             tk.Label(frame, text='#{}'.format(i+1)).grid(row=r, column=c)
+            val = tk.DoubleVar()
             curr = tk.Scale(frame, from_=SCALE_RANGE, to=-SCALE_RANGE, orient=tk.VERTICAL, resolution=0.01,
-                            command=lambda value, id=i: self.update_vector(value, id))
+                            command=lambda value, id=i: self.update_vector(value, id), variable=val)
             curr.grid(row=r+1, column=c)
 
             self.scales.append(curr)
+            self.vals.append(val)
 
     def set_display(self):
         '''
@@ -170,9 +173,21 @@ class GUI:
 
         tk.Button(frame, text='Enter', command=self.change_index).place(
             relx=0.8, rely=0.25, relwidth=0.2, relheight=0.05)
+        
+        if DEMO_FLAG:
+            # Demo buttons
+            tk.Button(frame, text="DEMO", command=self.demo).place(
+                relx=0, rely=0.4, relwidth=0.5, relheight=0.1)
 
-        tk.Button(frame, text="DEMO", command=self.demo).place(
-            relx=0, rely=0.4, relwidth=1, relheight=0.2)
+        # Interpolation
+        tk.Button(frame, text="GO", command=self.interpolate).place(
+            relx=0.5, rely=0.4, relwidth=0.5, relheight=0.1)
+
+        # Percent slider
+        self.percent_slider = tk.Scale(
+            frame, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, label="% to go")
+        self.percent_slider.place(relx=0, rely=0.5, relwidth=1, relheight=0.1)
+        self.percent_slider.set(0.5)
 
         # Invert button
         tk.Button(frame, text='INVERT', command=self.invert).place(
@@ -205,8 +220,9 @@ class GUI:
         Update the value of all scales
         to match the latent vector shown
         '''
-        for i, scale in enumerate(self.scales):
-            scale.set(self.latent_vector[i])
+        for i, val in enumerate(self.vals):
+            val.set(self.latent_vector[i])
+        self.update_image()
 
     def randomize(self):
         '''
@@ -267,6 +283,10 @@ class GUI:
         self.update_scales()
 
     def demo(self):
+        '''
+        Live demo, enabling the user to get a picture of themselves and
+        let the program attempt to reconstruct it.
+        '''
         cam = cv2.VideoCapture(0)
         cv2.namedWindow("Press Any Key - ESC to exit")
         demo_image = 0
@@ -278,11 +298,9 @@ class GUI:
             k = cv2.waitKey(1)
             if k % 256 == 27:
                 # ESC pressed
-                break
+                return
             elif k != -1:
-                #cv2.namedWindow("Captured - ESC to confirm")
                 demo_image = get_face(frame)
-                print(demo_image)
                 if demo_image is not None:
                     cv2.imshow("Captured - ESC to confirm", demo_image)
         cam.release()
@@ -298,6 +316,18 @@ class GUI:
             self.update_scales()
         except:
             print("[!] Unable to apply encoding")
+
+    def interpolate(self):
+        percent = self.percent_slider.get()
+        index = np.random.randint(data.shape[0])
+
+        index = 0
+
+        to = data[index]
+        for i in range(len(self.latent_vector)):
+            self.latent_vector[i] += to[i] - \
+                self.latent_vector[i] * percent
+        self.update_scales()
 
 
 if __name__ == '__main__':
